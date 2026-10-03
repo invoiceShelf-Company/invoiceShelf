@@ -1,565 +1,315 @@
-# 📦 Laraventry — Sistem Manajemen Inventori Laravel
+# 🏢 Laraventry Pro — Inventory & Facility Management
 
-> Sistem manajemen inventori berbasis web yang dibangun dengan Laravel 13. Dirancang untuk mengelola produk, stok, gudang, supplier, dan kategori dalam satu platform yang aman dan mudah digunakan.
+> A full-stack **Laravel 13** web application that combines stock/inventory management with facility operations (people, shifts, attendance, visitors, security) and an electronic payment verification workflow — fully localized in **8 languages** with RTL support.
 
 ---
 
-## 📋 Daftar Isi
+## Table of Contents
 
-- [Overview](#-overview)
-- [Untuk Siapa](#-untuk-siapa)
-- [Fitur](#-fitur)
-- [Tech Stack](#-tech-stack)
-- [Development](#-development)
-- [Production](#-production)
-- [Kredensial Default](#-kredensial-default)
-- [Arsitektur & Struktur](#-arsitektur--struktur)
-- [Keamanan](#-keamanan)
-- [Troubleshoot](#-troubleshoot)
+1. [Overview](#-overview)
+2. [Features](#-features)
+3. [Tech Stack](#-tech-stack)
+4. [Installation](#-installation)
+5. [Running the App](#-running-the-app)
+6. [Running Tests](#-running-tests)
+7. [Default Credentials](#-default-credentials)
+8. [User Roles & Access](#-user-roles--access)
+9. [Stock Movement Rules](#-stock-movement-rules)
+10. [Payment Verification](#-payment-verification)
+11. [Multi-language & RTL](#-multi-language--rtl)
+12. [Project Structure](#-project-structure)
+13. [Deployment (Production)](#-deployment-production)
+14. [Troubleshooting](#-troubleshooting)
+15. [License](#-license)
 
 ---
 
 ## 🔍 Overview
 
-**Inventori** adalah aplikasi web full-stack untuk manajemen stok barang. Sistem ini mampu melacak pergerakan stok secara real-time lintas gudang, memberikan peringatan stok rendah, dan menyimpan riwayat transaksi yang tidak dapat diubah (*immutable*).
+| Component    | Details                                          |
+| ------------ | ------------------------------------------------ |
+| Framework    | Laravel 13 (PHP 8.3+)                            |
+| Database     | SQLite (dev) / MySQL 8+ or PostgreSQL (prod)     |
+| Auth         | Session-based with encrypted cookie sessions     |
+| Testing      | PHPUnit 12 — 47 tests, 105 assertions (all green)|
+| Frontend     | Blade + Bootstrap 5.3 (CDN) + Vite/Tailwind build|
+| Localization | AR (default), EN, FR, ES, DE, TR, ZH_CN, NL_BE   |
 
-### Detail Teknis
-
-| Komponen | Detail |
-|----------|--------|
-| Framework | Laravel 13 (PHP 8.3+) |
-| Database | SQLite (dev) / MySQL/PostgreSQL (prod) |
-| Session | Database-backed, terenkripsi |
-| Auth | Session-based, single-role (Admin) |
-| Testing | PHPUnit 12 — 43 tests, 92 assertions |
-| Keamanan | CSRF, XSS-safe, rate limiting, bcrypt 12 rounds |
+The system tracks stock per product per warehouse with an immutable audit trail, while also serving as a business-operation platform for facilities: company/mall/property management, staff records, shift scheduling, attendance with automatic hour calculation, visitor registration, entry/exit logs, and manual payment verification with receipt uploads.
 
 ---
 
-## 👥 Untuk Siapa
+## ✨ Features
 
-Sistem ini cocok untuk:
+### Inventory Core
+- **Products** — CRUD with SKU, purchase/selling prices, units, minimum stock, low-stock filtering, per-warehouse stock view, and 20 latest movements on the detail page
+- **Categories** — auto-slug, search, delete protection when in use
+- **Suppliers** — multi-column search (name, contact, email, phone), delete protection
+- **Warehouses** — unique codes, search, delete protection when stock/history exists
+- **Stock Movements** — immutable ledger with `stock_before` / `stock_after` snapshots, filterable by product, warehouse, type, and date range
 
-- **Usaha kecil dan menengah (UKM)** yang butuh sistem inventori sederhana namun andal
-- **Toko retail** yang mengelola stok di satu atau beberapa gudang
-- **Developer Laravel** yang ingin mempelajari arsitektur service layer, form request, transaksi database, dan feature testing
-- **Tim internal perusahaan** yang membutuhkan sistem pencatatan stok dengan audit trail
+### Facility Management
+- **Facilities** — companies, malls, commercial stores, properties
+- **People** — employees, workers, guards, managers, technicians, contractors, tenants…
+- **Departments & Work locations**
+- **Shifts** — start/end times, grace period, break time, overnight support
+- **Attendance** — present / late / absent / leave / half-day / holiday with automatic calculation of worked minutes, late minutes, early departure, and overtime (overnight shifts handled)
+- **Visitors** — registration with visitor numbers and host tracking
+- **Access Logs** — unified entry/exit log for people and visitors with gates and recorder
 
-> ⚠️ Sistem ini dirancang untuk **satu role Admin**. Multi-user dengan role berbeda (admin/staf) merupakan rencana fitur lanjutan.
-
----
-
-## ✨ Fitur
-
-### Manajemen Master Data
-- **Kategori Produk** — CRUD kategori dengan auto-slug, search, dan proteksi hapus (tidak bisa dihapus jika masih ada produk terkait)
-- **Supplier** — CRUD supplier dengan multi-kolom search (nama, kontak, email, telepon) dan proteksi hapus
-- **Gudang** — CRUD gudang dengan kode unik, search, dan proteksi hapus berlapis (ada stok / ada riwayat)
-
-### Manajemen Produk
-- **CRUD Produk** lengkap dengan harga beli & jual, SKU unik, satuan, dan status aktif/non-aktif
-- **Filter multi-dimensi**: nama/SKU, kategori, supplier, status aktif, dan produk stok rendah
-- **Detail produk**: tampilan stok per gudang dan 20 riwayat pergerakan stok terbaru
-- **Proteksi hapus**: produk yang sudah memiliki riwayat stok tidak dapat dihapus
-
-### Manajemen Stok
-- **Stok Masuk (`in`)** — Menambah stok pada gudang tertentu
-- **Stok Keluar (`out`)** — Mengurangi stok (diblokir jika stok tidak mencukupi)
-- **Penyesuaian (`adjustment`)** — Set stok ke nilai absolut baru (stock opname)
-- **Riwayat immutable** — Pergerakan stok yang sudah dicatat tidak dapat diubah atau dihapus
-- **Pencatatan `stock_before` & `stock_after`** di setiap transaksi untuk audit trail penuh
-- **Filter riwayat**: produk, gudang, tipe, rentang tanggal
+### Administration
+- **Users & Roles** — admin panel to assign roles, facilities, and activation status
+- **Payment Verification** — users submit payments (amount, currency, reference, payer details, receipt upload) and admins approve/reject with notes
+- **Payment Methods** — configurable local/global accounts with instructions
 
 ### Dashboard
-- Ringkasan: total produk, kategori, supplier, gudang
-- Tabel **10 pergerakan stok terbaru**
-- Tabel **peringatan stok rendah** (produk di bawah minimum stok)
-
-### Autentikasi
-- Login / Logout berbasis session
-- **Remember Me** — session persisten
-- **Redirect-if-authenticated** — user yang sudah login tidak bisa mengakses halaman login
-- Semua halaman dilindungi middleware `auth`
-- **Rate limiting**: maksimum 5 percobaan login per menit per email+IP
+- Inventory value, cost, sales value, expected profit
+- Latest stock movements & inventory alerts (low stock)
+- Active people, security guards, present/absent today, overtime hours
+- 7-day activity chart
 
 ---
 
 ## 🛠 Tech Stack
 
 ```
-Backend:  Laravel 13, PHP 8.3+
-Database: SQLite (dev) / MySQL 8+ or PostgreSQL 14+ (prod)
-Auth:     Laravel built-in session auth
-Testing:  PHPUnit 12
-Frontend: Bootstrap 5.3, Bootstrap Icons (via CDN)
-Build:    Vite
+Backend:   Laravel 13, PHP 8.3+
+Database:  SQLite (dev) / MySQL 8+ / PostgreSQL 14+ (prod)
+Auth:      Laravel session auth + custom role middleware
+Testing:   PHPUnit 12 (+ Pint for code style)
+Frontend:  Blade templates, Bootstrap 5.3 (CDN), Bootstrap Icons
+Build:     Vite 8 + Tailwind CSS 4 (laravel-vite-plugin)
 ```
 
 ---
 
-## 💻 Development
+## 📦 Installation
 
-### Prasyarat
-
-- PHP 8.3+
-- Composer
+### Prerequisites
+- PHP 8.3+ with `pdo_sqlite` (or `pdo_mysql`), `openssl`, `mbstring`, `tokenizer`, `xml`, `ctype`, `bcmath`
+- Composer 2.x
 - Node.js 20+ & npm
-- SQLite extension aktif
 
-### Instalasi
+### Steps
 
 ```bash
-# 1. Clone repository
-git clone <repo-url>
-cd laraproj
+# 1. Clone the repository
+git clone https://github.com/invoiceShelf-Company/invoiceShelf.git laraventry
+cd laraventry
 
 # 2. Install PHP dependencies
 composer install
 
-# 3. Copy environment file
+# 3. Create the environment file
 cp .env.example .env
-
-# 4. Generate application key
 php artisan key:generate
 
-# 5. Install Node dependencies
+# 4. Create the SQLite database (default dev configuration)
+touch database/database.sqlite
+
+# 5. Migrate and seed demo data
+php artisan migrate:fresh --seed
+
+# 6. Install Node dependencies and build assets
 npm install
+npm run build
+```
 
-# 6. Siapkan database dan jalankan seeder
-php artisan migrate:fresh --seed
+> **Tip — one-liner setup:** `composer setup` runs install + key generation + migrations + npm build.
 
-# 7. Jalankan development server
-npm run dev
-# Di terminal lain:
+> To use **MySQL** instead, edit `.env`: set `DB_CONNECTION=mysql` and remove the commented `DB_HOST/PORT/DATABASE/USERNAME/PASSWORD` lines below it.
+
+---
+
+## 🚀 Running the App
+
+```bash
+# Development server (http://127.0.0.1:8000)
 php artisan serve
+
+# Or run everything (server + queue + logs + vite) at once
+composer dev
 ```
 
-> **Atau gunakan shortcut Composer:**
-> ```bash
-> composer setup   # install + migrate + build
-> composer dev     # serve + queue + log watcher + vite
-> ```
+**Login with the seeded admin account:**
 
-### Menjalankan Tests
+| Field    | Value                   |
+| -------- | ----------------------- |
+| Email    | `admin@inventori.test`  |
+| Password | `password`              |
+
+---
+
+## 🧪 Running Tests
 
 ```bash
-# Jalankan semua tests
-php artisan test
-
-# Atau via Composer
-composer test
-
-# Filter per kelas
-php artisan test --filter=AuthTest
-php artisan test --filter=CategoryTest
-php artisan test --filter=ProductTest
-php artisan test --filter=StockMovementTest
+php artisan test          # 47 tests, 105 assertions
+./vendor/bin/pint --test  # code style (Pint)
+./vendor/bin/pint         # auto-fix code style
 ```
 
-**Expected output:** `Tests: 43, Assertions: 92, Passed: 43`
+Tests run against an in-memory SQLite database and never touch your dev data.
 
-### Reset Database
+---
 
-```bash
-# Reset total + jalankan seeder ulang
-php artisan migrate:fresh --seed
+## 🔐 User Roles & Access
+
+Roles are enforced by the `role:` middleware (`App\Http\Middleware\EnsureUserRole`).
+
+| Role                | Access                                                        |
+| ------------------- | ------------------------------------------------------------- |
+| `super_admin`       | Everything                                                    |
+| `admin`             | Everything (all modules, users, payments, inventory)          |
+| `hr`                | Facilities, people, shifts, attendance, visitors, payments    |
+| `security`          | Visitors, access logs                                         |
+| `warehouse_manager` | Inventory: products, categories, suppliers, warehouses, stock |
+| `accountant`        | (reserved)                                                    |
+| `employee` / `worker` / `viewer` / `user` | Dashboard only                          |
+
+Public registration always creates a plain `user`; role escalation only happens through the admin Users panel.
+
+---
+
+## 📊 Stock Movement Rules
+
+| Type         | Effect                                            |
+| ------------ | ------------------------------------------------- |
+| `in`         | Adds stock to the selected warehouse              |
+| `out`        | Subtracts stock — **blocked if insufficient**     |
+| `adjustment` | Corrects stock during stocktaking                 |
+
+- Movements are **immutable** — no edit/delete; corrections are new movements
+- `stock_before` and `stock_after` are stored on every record (full audit trail)
+- `DB::transaction` + `lockForUpdate` protect against race conditions
+- Quick reference: units — `pcs`, `rim`, `sak`, `kg`, `botol`, `box`… (free-form)
+
+---
+
+## 💳 Payment Verification
+
+This module is a **manual electronic-payment verification workflow**:
+
+1. The user picks a payment method (local or global account), enters amount, currency, transaction reference, payer details, and uploads a receipt (image/PDF, max 5 MB)
+2. The payment is stored as `pending`
+3. An admin opens the payment detail, downloads/inspects the receipt, then **Approves** or **Rejects** with review notes
+
+> ⚠️ It does **not** process money through gateways (PayPal, Stripe, banks). Replace the demo payment-method accounts with real ones via the Payment Methods screen before real use.
+
+---
+
+## 🌍 Multi-language & RTL
+
+- Selector in the top bar and on the login screen: `AR · EN · FR · ES · DE · TR · ZH_CN · NL_BE`
+- Arabic is the default; the layout auto-switches **RTL ↔ LTR** per language
+- Translations live in `resources/lang/*.json`; the app pre-compiles Arabic literals in Blade views and translates them at render time via `App\Support\LocalizedText`
+- Switch URL: `/language/{locale}`
+
+---
+
+## 🏗 Project Structure
+
 ```
+app/
+├── Enums/UserRole.php            # Role enum + labels
+├── Http/
+│   ├── Controllers/
+│   │   ├── Auth/                 # Login, register, logout
+│   │   ├── Management/           # Facility, person, shift, attendance,
+│   │   │                         # department, visitor, access-log, payment…
+│   │   └── ...                   # Dashboard, product, category, supplier…
+│   ├── Middleware/
+│   │   ├── EnsureUserRole.php    # role:... gate
+│   │   └── SetLocale.php         # per-session locale + runtime translation
+│   └── Requests/                 # Form Request validation
+├── Models/                       # User, Product, StockMovement, Person…
+├── Services/Inventory/
+│   └── StockMovementService.php  # Transactional stock logic
+└── Support/LocalizedText.php     # Localization helper
 
-### Konfigurasi Development (`.env`)
+resources/
+├── views/                        # Blade: dashboard, inventory/*, facility/*
+└── lang/{ar,en,fr,es,de,tr,zh_CN,nl_BE}.json
 
-```dotenv
-APP_NAME=Inventori
-APP_ENV=local
-APP_DEBUG=true
-APP_URL=http://localhost:8000
+database/
+├── migrations/                   # ~20 migrations (auth → payments)
+├── factories/                    # User, Category, Supplier, Warehouse, Product
+└── seeders/DatabaseSeeder.php    # Full demo dataset
 
-# Timezone WIB
-APP_TIMEZONE=Asia/Jakarta
-
-DB_CONNECTION=sqlite
-# DB_DATABASE=database/database.sqlite  # default
-
-SESSION_DRIVER=database
-SESSION_LIFETIME=120
-SESSION_ENCRYPT=true
-
-BCRYPT_ROUNDS=12
+routes/web.php                    # Guest routes + role-protected groups
+tests/Feature/                    # Auth, Category, Product, StockMovement
 ```
 
 ---
 
-## 🚀 Production
-
-### Prasyarat Production
-
-- PHP 8.3+ dengan ekstensi: `pdo_mysql` / `pdo_pgsql`, `openssl`, `mbstring`, `tokenizer`, `xml`, `ctype`, `json`, `bcmath`
-- MySQL 8+ atau PostgreSQL 14+
-- Web server: Nginx / Apache
-- Supervisor (untuk queue worker jika diperlukan)
-
-### Langkah Deploy
+## 🚄 Deployment (Production)
 
 ```bash
-# 1. Clone / pull kode ke server
-git clone <repo-url> /var/www/inventori
-cd /var/www/inventori
-
-# 2. Install dependencies (tanpa dev)
+# 1. Install dependencies without dev packages
 composer install --no-dev --optimize-autoloader
 
-# 3. Copy dan edit .env production
-cp .env.example .env
-# Edit sesuai konfigurasi production (lihat di bawah)
-
-# 4. Generate app key
+# 2. Configure production .env, then:
 php artisan key:generate
 
-# 5. Build frontend assets
-npm ci
-npm run build
+# 3. Build assets
+npm ci && npm run build
 
-# 6. Jalankan migration (TANPA --seed di production)
+# 4. Migrate (never seed in production)
 php artisan migrate --force
 
-# 7. Buat user admin pertama via Tinker
+# 5. Create the first admin via tinker
 php artisan tinker
->>> \App\Models\User::create(['name'=>'Admin','email'=>'admin@domain.com','password'=>bcrypt('your-strong-password')])->forceFill(['role'=>'admin'])->save();
+>>> \App\Models\User::create(['name' => 'Admin', 'email' => 'admin@yourdomain.com',
+>>>     'password' => bcrypt('STRONG-PASSWORD')])->forceFill(['role' => 'super_admin'])->save();
 
-# 8. Optimasi
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
+# 6. Optimize
+php artisan config:cache && php artisan route:cache && php artisan view:cache
 
-# 9. Set permission storage
+# 7. Permissions
 chmod -R 775 storage bootstrap/cache
-chown -R www-data:www-data storage bootstrap/cache
 ```
 
-### Konfigurasi Production (`.env`)
+**Production `.env` checklist:**
 
 ```dotenv
-APP_NAME=Inventori
 APP_ENV=production
-APP_DEBUG=false                          # ← WAJIB false
+APP_DEBUG=false           # REQUIRED
 APP_URL=https://yourdomain.com
-APP_TIMEZONE=Asia/Jakarta
 
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
-DB_DATABASE=inventori_db
-DB_USERNAME=inventori_user
-DB_PASSWORD=your-strong-db-password     # ← Gunakan password kuat
+DB_DATABASE=laraventry
+DB_USERNAME=laraventry_user
+DB_PASSWORD=STRONG-PASSWORD
 
 SESSION_DRIVER=database
-SESSION_LIFETIME=120
-SESSION_ENCRYPT=true                    # ← WAJIB true
-SESSION_SECURE_COOKIE=true             # ← Aktifkan jika pakai HTTPS
-
-BCRYPT_ROUNDS=12
+SESSION_ENCRYPT=true
+SESSION_SECURE_COOKIE=true    # when using HTTPS
 
 LOG_CHANNEL=daily
 LOG_LEVEL=warning
 ```
 
-> **⚠️ PENTING:**
-> - Jangan commit file `.env` ke Git
-> - Ganti semua password default sebelum deploy
-> - Pastikan `APP_DEBUG=false` di production
-> - Gunakan HTTPS di production
-
-### Konfigurasi Nginx (contoh)
-
-```nginx
-server {
-    listen 80;
-    server_name yourdomain.com;
-    root /var/www/inventori/public;
-
-    add_header X-Frame-Options "SAMEORIGIN";
-    add_header X-Content-Type-Options "nosniff";
-
-    index index.php;
-    charset utf-8;
-
-    location / {
-        try_files $uri $uri/ /index.php?$query_string;
-    }
-
-    location ~ \.php$ {
-        fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
-        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
-        include fastcgi_params;
-    }
-
-    location ~ /\.(?!well-known).* {
-        deny all;
-    }
-}
-```
+Point the web root at `public/` and block all dotfiles except `.well-known`.
 
 ---
 
-## 🔑 Kredensial Default
+## 🔧 Troubleshooting
 
-> ⚠️ **Hanya untuk development/testing.** Ganti sebelum production.
-
-| Field | Value |
-|-------|-------|
-| Email | `admin@inventori.test` |
-| Password | `password` |
-
----
-
-## 🏗 Arsitektur & Struktur
-
-```
-app/
-├── Enums/
-│   └── UserRole.php              # Enum role user (Admin)
-├── Http/
-│   ├── Controllers/
-│   │   ├── Auth/
-│   │   │   └── LoginController.php
-│   │   ├── DashboardController.php
-│   │   ├── CategoryController.php
-│   │   ├── SupplierController.php
-│   │   ├── WarehouseController.php
-│   │   ├── ProductController.php
-│   │   └── StockMovementController.php
-│   └── Requests/
-│       ├── Store/UpdateCategoryRequest.php
-│       ├── Store/UpdateSupplierRequest.php
-│       ├── Store/UpdateWarehouseRequest.php
-│       ├── Store/UpdateProductRequest.php
-│       └── StoreStockMovementRequest.php
-├── Models/
-│   ├── User.php
-│   ├── Category.php
-│   ├── Supplier.php
-│   ├── Warehouse.php
-│   ├── Product.php
-│   ├── ProductStock.php
-│   └── StockMovement.php
-├── Providers/
-│   └── AppServiceProvider.php    # Rate limiter config
-└── Services/
-    └── Inventory/
-        └── StockMovementService.php  # Core business logic
-
-database/
-├── migrations/                   # 9 tabel migration
-├── factories/                    # User, Category, Supplier, Warehouse, Product factories
-└── seeders/
-    └── DatabaseSeeder.php        # 20 produk + riwayat stok realistis
-
-routes/
-└── web.php                       # Guest routes + Auth-protected routes
-
-tests/
-└── Feature/
-    ├── AuthTest.php              # 12 tests
-    ├── CategoryTest.php          # 8 tests
-    ├── ProductTest.php           # 9 tests
-    ├── StockMovementTest.php     # 11 tests
-    └── ExampleTest.php           # 3 tests
-```
-
-### Alur Transaksi Stok
-
-```
-Request → StoreStockMovementRequest (validasi)
-        → StockMovementController::store()
-        → StockMovementService::createMovement()
-            ├── DB::transaction()
-            ├── ProductStock::lockForUpdate()  ← cegah race condition
-            ├── Hitung stock_before & stock_after
-            ├── Validasi: stok tidak boleh negatif
-            ├── Update ProductStock.quantity
-            └── Create StockMovement (immutable record)
-```
+| Problem | Fix |
+| ------- | --- |
+| `Please provide a valid cache path` | Create the storage dirs: `mkdir -p storage/framework/{views,cache/data,sessions} storage/logs bootstrap/cache` |
+| `SQLSTATE[HY000]: no such table: sessions` | Run `php artisan migrate` (session driver writes to the DB) |
+| `APP_KEY` missing error | `php artisan key:generate` |
+| Login fails with correct credentials | `php artisan migrate:fresh --seed` then retry; also `config:clear` |
+| Stuck in rate limit (5 logins/min) | Wait 1 minute |
+| Stock `out` fails despite enough total stock | Stock is counted **per warehouse**, not globally |
+| 403 on pages | Your account's role lacks access — assign a proper role via the Users screen as an admin |
+| CSS missing / no styles | `npm install && npm run build` (or `npm run dev`) |
+| Consumer view not updating after code changes | `php artisan view:clear && php artisan config:clear` |
 
 ---
 
-## 🔒 Keamanan
+## 📄 License
 
-| Aspek | Implementasi |
-|-------|-------------|
-| CSRF | Laravel default middleware, `@csrf` di semua form |
-| XSS | Blade `{{ }}` escaping di semua output |
-| SQL Injection | Eloquent parameterized queries — tidak ada raw query |
-| Brute Force | Rate limit 5x/menit per email+IP via `throttle:login` |
-| Session Fixation | `session()->regenerate()` saat login, `invalidate()` saat logout |
-| Session Encryption | `SESSION_ENCRYPT=true` |
-| Password | Bcrypt 12 rounds via model cast |
-| Mass Assignment | `$fillable` eksplisit di semua model; `role` dikecualikan |
-| Race Condition | `DB::transaction()` + `lockForUpdate()` pada transaksi stok |
-
----
-
-## 🔧 Troubleshoot
-
-### ❌ Error: `View [layouts.app] not found`
-Dashboard dan halaman lain memerlukan file layout utama.
-
-```bash
-# Cek apakah file ada
-ls resources/views/layouts/app.blade.php
-```
-Jika tidak ada, buat file `resources/views/layouts/app.blade.php` sebagai layout Bootstrap 5.
-
----
-
-### ❌ Error: `SQLSTATE[HY000]: no such table: sessions`
-Session driver menggunakan database tapi tabel belum ada.
-
-```bash
-php artisan migrate
-```
-
----
-
-### ❌ Error: `Class "App\Models\ProductStock" not found`
-Autoloader belum di-refresh setelah penambahan file.
-
-```bash
-composer dump-autoload
-```
-
----
-
-### ❌ Login gagal padahal kredensial benar
-Kemungkinan penyebab:
-1. Database belum di-seed
-   ```bash
-   php artisan migrate:fresh --seed
-   ```
-2. Cache config lama
-   ```bash
-   php artisan config:clear && php artisan cache:clear
-   ```
-3. Sudah kena rate limit (5x/menit) — tunggu 1 menit
-
----
-
-### ❌ Stok keluar gagal padahal stok cukup
-Pastikan `product_id` dan `warehouse_id` yang dipakai sesuai. Stok dihitung **per gudang**, bukan total semua gudang.
-
----
-
-### ❌ `php artisan test` gagal dengan error database
-Test menggunakan in-memory SQLite terpisah dari database development.
-
-```bash
-# Pastikan SQLite extension aktif
-php -m | findstr sqlite
-
-# Clear config cache sebelum test
-php artisan config:clear
-php artisan test
-```
-
----
-
-### ❌ Halaman muncul tapi tidak ada style (CSS tidak load)
-Asset Vite belum di-build.
-
-```bash
-# Development
-npm run dev
-
-# Production
-npm run build
-```
-
----
-
-### ❌ `APP_KEY` error saat pertama install
-
-```bash
-php artisan key:generate
-```
-
----
-
-### 🔄 Reset total ke kondisi awal
-
-```bash
-php artisan migrate:fresh --seed
-php artisan config:clear
-php artisan cache:clear
-php artisan view:clear
-```
-
----
-
-## 📄 Lisensi
-
-MIT License — bebas digunakan untuk keperluan pribadi, edukasi, maupun komersial.
-
-# Laraventry Pro — Facility, People & Attendance Edition
-
-This edition expands the inventory application into a facility/business management system.
-
-## New modules
-
-- Facilities: company, mall, commercial store, property/building, other.
-- People: employees, workers, security guards, managers, supervisors, technicians, cleaners, sales, HR, contractors, tenants and other roles.
-- Departments and work locations.
-- Shifts with start/end time, grace period, break time and overnight support.
-- Attendance: present, late, absent, leave, half-day and holiday.
-- Automatic calculation of worked time, late minutes, early departure and overtime.
-- Visitors and visitor numbers.
-- Access control logs for entry/exit, gates and recorded-by user.
-- Security guard fields: security company, permit number, permit expiry and guard post.
-- Expanded dashboard with people, security, attendance, overtime, inventory value, expected profit, visitors, alerts and 7-day chart.
-
-## Fresh installation
-
-1. Copy `.env.example` to `.env`.
-2. Configure MySQL/SQLite in `.env`.
-3. Run `composer install`.
-4. Run `php artisan key:generate`.
-5. Run `php artisan migrate:fresh --seed` for the included demo database.
-6. Run `npm install` and `npm run build`.
-7. Start with `php artisan serve` or the Laragon Apache/Nginx setup.
-
-Demo account after seeding:
-
-- Email: `admin@inventori.test`
-- Password: `password`
-
-Change the demo password before using the system for real data.
-
-## Attendance logic
-
-A person's assigned shift supplies the scheduled start/end times. When an attendance record has check-in and check-out, the application calculates:
-
-- worked minutes
-- late minutes after the shift grace period
-- early departure minutes
-- overtime minutes after scheduled end
-
-Overnight shifts are supported by adding the end time to the following day when required.
-
-## Security / access roles
-
-The application now includes role-aware access middleware. Administrative users can manage users and assign roles such as Admin, HR, Security, Warehouse Manager, Accountant, Viewer, Employee and Worker. Public registration never accepts a role from the browser; new registrations receive the default `user` role.
-
-## Important
-
-The supplied project archive intentionally does not include the `vendor/` directory. Run `composer install` once on the target Windows/Laragon machine. This avoids shipping a machine-specific PHP dependency tree.
-
-## New Pro Modules (September 2026)
-
-### Multi-language UI
-The application now includes a locale system for Arabic, English, French, Spanish, German, Turkish, and Simplified Chinese. The language selector is available in the authenticated top bar and login screen. The layout automatically switches between RTL Arabic and LTR languages. Existing legacy screens that still contain hard-coded Arabic labels can be progressively migrated to translation keys without changing their business logic.
-
-### Payment verification
-A new payment workflow supports local and global payment accounts. Administrators can configure payment methods/accounts, users can submit a payment with amount, currency, transaction reference, payer details, and a receipt image/PDF, and administrators can approve or reject the payment with review notes. Uploaded receipts are stored on the server and are served through authenticated routes.
-
-After installing, run `php artisan migrate:fresh --seed` to create the new payment tables and demo payment methods. Replace the demo account values from the Payment Methods screen with the real accounts before production use.
-
-**Important:** This module is a manual electronic-payment verification workflow. It does not claim to process money directly through PayPal, Stripe, banks, or mobile-wallet APIs. Real gateway processing requires the relevant provider credentials/API integration.
-#   A l a z z a z i _ i n v o i c e S h e l f  
- 
+MIT License — free to use for personal, educational, and commercial purposes.
