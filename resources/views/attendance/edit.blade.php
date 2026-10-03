@@ -1,0 +1,1 @@
+@extends('layouts.app') @section('title','تعديل الحضور') @section('content') @include('attendance.form',['attendance'=>$attendance,'action'=>route('attendance.update',$attendance),'method'=>'PUT']) @endsection

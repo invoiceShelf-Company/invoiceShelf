@@ -1,0 +1,1 @@
+@extends('layouts.app') @section('title','تعديل المنشأة') @section('content') @include('facilities.form',['facility'=>$facility,'action'=>route('facilities.update',$facility),'method'=>'PUT']) @endsection
